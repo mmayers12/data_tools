@@ -41,6 +41,8 @@ def map_edge_types_from_file(edges, map_df, orig_type='type', new_type='new_type
 
         to_type = getattr(row, new_type)
         swap = getattr(row, swap_label)
+        if pd.isnull(swap):
+            swap = False
 
         change_edge_type(edges, to_change, to_type, swap)
 
