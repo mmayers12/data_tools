@@ -34,4 +34,6 @@ def map_edge_types_from_file(edges, map_df, orig_type='type', new_type='new_type
         for row in map_df.itertuples():
             inner_func()
 
-    edges.dropna(subset=['type'], inplace=True).reset_index(drop=True, inplace=True)
+    edges.dropna(subset=['type'], inplace=True)
+    edges.reset_index(drop=True, inplace=True)
+
