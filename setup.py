@@ -1,6 +1,7 @@
 from setuptools import setup
 
 install_requires = [
+    'requests>=2.22.0',
     'hetnetpy',
     'tqdm',
     'pandas',
