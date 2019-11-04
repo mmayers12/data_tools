@@ -1,6 +1,6 @@
 import pandas as pd
 from tqdm import tqdm
-from hetnet_ml.graph_tools import combine_nodes_and_edges
+from graphs import combine_nodes_and_edges
 
 
 def change_edge_type(edges, idx, new_type, swap=False):

@@ -1,12 +1,14 @@
 import pandas as pd
 from collections import Counter
 from collections import defaultdict
-from hetnetpy.hetnet import MetaGraph
+from hetnetpy.hetnet import MetaGraph, MetaEdge
+from hetnet_ml.graph_tools import get_abbrev_dict_and_edge_tuples
 
 
 def dataframes_to_metagraph(nodes, edges):
+    """Converts Nodes and Edges DataFrame to a hetnetpy.hetnet.MetaGraph"""
     abbrev_dict, edge_tuples = get_abbrev_dict_and_edge_tuples(nodes, edges)
-    return MetaGraph(abbrev_dict, edge_tuples)
+    return MetaGraph.from_edge_tuples(edge_tuples, abbrev_dict)
 
 
 def metapaths_to_json(metapaths):
@@ -29,7 +31,7 @@ def metapaths_to_json(metapaths):
 
 
 def subset_mps_by_node_count(metapaths, max_counts=None, subset=None, default_max=1):
-
+    """Subsets lists of metapaths by number of repeats of a metanode"""
     if max_counts is None:
         max_counts = defaultdict(lambda:default_max)
     else:
