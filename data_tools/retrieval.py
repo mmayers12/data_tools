@@ -62,7 +62,7 @@ def download_ftp(url, out_name):
     ftp.retrbinary("RETR {}".format(dl_path), open(out_name, 'wb').write)
     ftp.quit()
 
-def download_file(url, out_name=None, redownload=False)
+def download(url, out_name=None, redownload=False):
     """
     Determiens the proper protocol to download a file from a URL.
     Will save the file to `out_name` and will by default skip if the output
@@ -106,9 +106,9 @@ def download_file(url, out_name=None, redownload=False)
     # Save text
     elif is_text(url):
         print('Saving {}'.format(file_name))
-        save_text(row.url, out_name)
+        save_text(url, out_name)
         print('Done')
-    # Skip non-conforming files and print to screen. 
+    # Skip non-conforming files and print to screen.
     else:
         print(file_name, ": Not a downloadable file or text... ")
         print('Skipping....')

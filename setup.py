@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 install_requires = [
     'requests>=2.22.0',
@@ -17,7 +17,7 @@ setup(
     author_email='mmayers@scripps.edu',
     url='https://github.com/mmayers12/data_tools',
     version='0.0.1',
-    packages=['data_tools'],
+    packages=find_packages(),
     license='LICENSE',
     description='Tools for manipulating data, particularly with the end goal of forming hetnet',
     long_description=open('README.md').read(),
