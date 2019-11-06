@@ -1,0 +1,12 @@
+# Compiled, cached, and temp files
+*.swp
+*__pycache__
+*.pyc
+
+# Testing enviornment related files
+*.csv
+*.txt
+*.pkl
+*.ipynb
+*.ipynb_checkpoints
+

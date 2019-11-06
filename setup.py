@@ -5,6 +5,10 @@ install_requires = [
     'hetnetpy',
     'tqdm',
     'pandas',
+    'matplotlib_venn',
+    'matplotlib>=3.1.1',
+    'scikit-learn>=0.21.3',
+    'scipy>=1.3.1'
 ]
 
 setup(
