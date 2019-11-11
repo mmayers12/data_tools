@@ -1,7 +1,7 @@
 import functools
 from itertools import chain
 from wikidataintegrator.wdi_core import WDItemEngine
-from data_tools.df_processing import char_combine_iter, expand_col_on_char
+from data_tools.df_processing import char_combine_iter, expand_col_on_char, add_curi
 
 
 def parse_result_uris(result):
