@@ -8,7 +8,8 @@ install_requires = [
     'matplotlib_venn',
     'matplotlib>=3.1.1',
     'scikit-learn>=0.21.3',
-    'scipy>=1.3.1'
+    'scipy>=1.3.1',
+    'wikidataintegrator>=0.4.2'
 ]
 
 setup(
