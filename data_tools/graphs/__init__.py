@@ -1,1 +1,1 @@
-__all__ = ['graphs', 'edge_processing']
+__all__ = ['graphs', 'edge_processing', 'metapaths']
