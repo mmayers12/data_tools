@@ -1,7 +1,11 @@
-import random
-import pandas as pd
-from collections import OrderedDict
+import random as _random
+import pandas as _pd
+from collections import OrderedDict as _oDict
 
+__all__ = ['get_direction_from_abbrev', 'get_edge_name', 'map_id_to_value',
+            'parse_edge_abbrev', 'get_abbrev_dict_and_edge_tuples', 'combine_nodes_and_edges',
+            'get_node_degrees', 'add_colons', 'remove_colons', 'determine_split_string',
+            'order_cols', 'permute_edges', 'permute_graph']
 
 def get_direction_from_abbrev(abbrev):
     """Finds the direction of a metaedge from its abbreviaton"""
@@ -136,7 +140,7 @@ def combine_nodes_and_edges(nodes, edges):
 
 def get_node_degrees(edges):
     """Determines the degrees for all nodes"""
-    return pd.concat([remove_colons(edges)['start_id'], remove_colons(edges)['end_id']]).value_counts()
+    return _pd.concat([remove_colons(edges)['start_id'], remove_colons(edges)['end_id']]).value_counts()
 
 
 def add_colons(df, id_name='', col_types={}):
@@ -235,7 +239,7 @@ def permute_edges(edges, directed=False, multiplier=10, excluded_edges=None, see
 
     :return permuted_edges, stats: DataFrame, DataFrame - the permuted start and end ids, the permutation stats.
     """
-    random.seed(seed)
+    _random.seed(seed)
 
     orig_columns = edges.columns
     edges = remove_colons(edges)
@@ -274,10 +278,10 @@ def permute_edges(edges, directed=False, multiplier=10, excluded_edges=None, see
     for i in range(n_perm):
 
         # Same two random edges without replacement
-        i_0 = random.randrange(edge_number)
+        i_0 = _random.randrange(edge_number)
         i_1 = i_0
         while i_0 == i_1:
-            i_1 = random.randrange(edge_number)
+            i_1 = _random.randrange(edge_number)
 
         edge_0 = edge_list[i_0]
         edge_1 = edge_list[i_1]
@@ -322,7 +326,7 @@ def permute_edges(edges, directed=False, multiplier=10, excluded_edges=None, see
                 edge_set.add(edge)
 
         if i in print_at:
-            stat = OrderedDict()
+            stat = _oDict()
             stat['cumulative_attempts'] = i
             index = print_at.index(i)
             stat['attempts'] = print_at[index] + 1 if index == 0 else print_at[index] - print_at[index - 1]
@@ -340,13 +344,13 @@ def permute_edges(edges, directed=False, multiplier=10, excluded_edges=None, see
             count_excluded = 0
 
     assert len(edge_list) == edge_number
-    out_edges = pd.DataFrame({'start_id': [edge[0] for edge in edge_list],
+    out_edges = _pd.DataFrame({'start_id': [edge[0] for edge in edge_list],
                               'end_id': [edge[1] for edge in edge_list],
                               'type': [e_type] * edge_number})
 
     out_edges = out_edges.rename(columns=col_name_mapper)
 
-    return out_edges, pd.DataFrame(stats)
+    return out_edges, _pd.DataFrame(stats)
 
 
 def permute_graph(edges, multiplier=10, excluded_edges=None, seed=0):
@@ -382,8 +386,8 @@ def permute_graph(edges, multiplier=10, excluded_edges=None, seed=0):
         stats['etype'] = etype
         edge_stats.append(stats)
 
-    stats = pd.concat(edge_stats)
-    permuted_graph = pd.concat(permuted_edges)
+    stats = _pd.concat(edge_stats)
+    permuted_graph = _pd.concat(permuted_edges)
 
     # Return column names to neo4j standards if applicable
     permuted_graph = permuted_graph.rename(columns=col_name_mapper)

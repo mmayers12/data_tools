@@ -1,11 +1,15 @@
-import os
-import ftplib
-import urllib
-import requests
+import os as _os
+import ftplib as _ftplib
+import urllib as _urllib
+import requests as _requests
+
+__all__ = ['get_content_type', 'is_downloadable', 'is_text', 'download_file', 'save_text',
+            'is_ftp', 'download_ftp', 'download']
+
 
 def get_content_type(url):
     """Determines the content type of a URL"""
-    h = requests.head(url, allow_redirects=True)
+    h = _requests.head(url, allow_redirects=True)
     header = h.headers
     content_type = header.get('content-type')
     return content_type
@@ -34,30 +38,30 @@ def is_text(url, content_type=None):
 
 def download_file(url, out_name):
     """Downloads a file ot the given out_name"""
-    r = requests.get(url, allow_redirects=True)
+    r = _requests.get(url, allow_redirects=True)
     open(out_name, 'wb').write(r.content)
 
 
 def save_text(url, out_name):
     """Save text to given filename to out_name"""
-    r = requests.get(url)
+    r = _requests.get(url)
     open(out_name, 'w').write(r.text)
 
 
 def is_ftp(url):
     """Determine if a url is over ftp protocol"""
-    return urllib.parse.urlparse(url).scheme == 'ftp'
+    return _urllib.parse.urlparse(url).scheme == 'ftp'
 
 
 def download_ftp(url, out_name):
     """Download a file from an ftp server to out_name"""
     # Parse the FTP url
-    parsed = urllib.parse.urlparse(url)
+    parsed = _urllib.parse.urlparse(url)
     server = parsed.netloc
     dl_path = parsed.path
 
     # Download the file
-    ftp = ftplib.FTP(server)
+    ftp = _ftplib.FTP(server)
     ftp.login()
     ftp.retrbinary("RETR {}".format(dl_path), open(out_name, 'wb').write)
     ftp.quit()
@@ -82,14 +86,14 @@ def download(url, out_name=None, redownload=False):
         file_name = out_name
     else:
         #Grab the base filename
-        file_name = os.path.basename(out_name)
+        file_name = _os.path.basename(out_name)
         # Make sure the output directory exists
-        out_dir = os.path.dirname(out_name)
-        if not os.path.exists(out_dir):
-            os.path.makedirs(out_dir, exist_ok=True)
+        out_dir = _os.path.dirname(out_name)
+        if not _os.path.exists(out_dir):
+            _os.path.makedirs(out_dir, exist_ok=True)
 
     # Only redownload an already existing file if user explicitly states
-    if os.path.exists(out_name) and not redownload:
+    if _os.path.exists(out_name) and not redownload:
         print('File {} exits. Skipping...'.format(file_name))
         return None
 

@@ -4,6 +4,10 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import precision_recall_curve, roc_curve, auc
 
 
+__all__ = ['graph_single_roc', 'graph_single_prc', 'graph_mean_roc', 'graph_mean_prc',
+            'graph_roc_boilerplate', 'graph_prc_boilerplate']
+
+
 def graph_single_roc(y, y_pred, label="", lw=4, alpha=1):
     fpr, tpr, thresh = roc_curve(y, y_pred, drop_intermediate=False)
     if label:

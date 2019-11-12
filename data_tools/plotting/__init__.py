@@ -1,1 +1,13 @@
-__all__ = ['ml', 'venn', 'std']
+__all__ = []
+
+from . import _ml
+from ._ml import *
+from . import _venn
+from ._venn import *
+from . import _std
+from ._std import *
+
+__all__ += _ml.__all__
+__all__ += _venn.__all__
+__all__ += _std.__all__
+

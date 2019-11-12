@@ -3,7 +3,10 @@ import matplotlib.pyplot as plt
 import matplotlib.patheffects as pe
 from matplotlib_venn import venn2, venn2_circles, venn3, venn3_circles
 
+
+__all__ = ['venn2_pretty', 'venn3_pretty']
 PREF_COLORS = ["#38b5fc", "#fa8f52", "#917ad8", "#3ff44c", "#00904f", "#faff49", "#d4e7db"]
+
 
 def _venn_pretty(subsets, num_circles, set_labels=('A', 'B'),  title='',
                  alpha=0.9, norm=10, lw=1.5, num_size=12, lbl_size=14, t_size=16,

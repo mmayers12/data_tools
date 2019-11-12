@@ -2,6 +2,8 @@ import pandas as pd
 import seaborn as sns
 
 
+__all__ = ['count_plot_h']
+
 def count_plot_h(data, annotate=True, **params):
     """
     Wrapper for seaborn's Barpolot with horizontal result. Functions like sns.countplot(), but also allows for
@@ -44,3 +46,4 @@ def count_plot_h(data, annotate=True, **params):
             annotation = annotate[n.get_text()]
             splot.annotate(fs.format(f(annotation)), (p.get_width(), p.get_y() + p.get_height()),
                            ha = 'left', va = 'center_baseline', xytext = (0, 10), textcoords = 'offset points')
+

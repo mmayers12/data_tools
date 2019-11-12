@@ -1,7 +1,8 @@
-import pandas as pd
-from tqdm import tqdm
-from graphs import combine_nodes_and_edges
+import pandas as _pd
+from tqdm import tqdm as _tqdm
+from ._graphs import combine_nodes_and_edges
 
+__all__ = ['change_edge_type', 'map_edge_types_from_file']
 
 def change_edge_type(edges, idx, new_type, swap=False):
     """
@@ -41,13 +42,13 @@ def map_edge_types_from_file(edges, map_df, orig_type='type', new_type='new_type
 
         to_type = getattr(row, new_type)
         swap = getattr(row, swap_label)
-        if pd.isnull(swap):
+        if _pd.isnull(swap):
             swap = False
 
         change_edge_type(edges, to_change, to_type, swap)
 
     if prog:
-        for row in tqdm(map_df.itertuples(), total=len(map_df)):
+        for row in _tqdm(map_df.itertuples(), total=len(map_df)):
             inner_func()
     else:
         for row in map_df.itertuples():
