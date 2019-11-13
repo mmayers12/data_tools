@@ -9,7 +9,7 @@ def char_combine_iter(iterable, char='|', sort=False):
     return char.join(sorted(out)) if sort else char.join(out)
 
 
-def char_combine_series(col, char='|', sort=False):
+def char_combine_series(col, char='|', sort=False, split=True):
     """
     Converts a Series to a string, splitting elements within that Series on a character, dedupcating all elements,
     removing na values, then joining across that character on that charcter.
@@ -79,7 +79,7 @@ def find_cols_with_multi_values(grouped):
     return multi_val_cols
 
 
-def combine_group_cols_on_char(df, group_on, combine_cols=None, char='|', sort=False, split=True):
+def combine_group_cols_on_char(df, group_on, combine_cols=None, char='|', sort=False, split=True, prog=True):
     """
     Performs a Groupby on a dataframe and then converts each group into a single row, joinned by a character `char`
 
@@ -94,10 +94,12 @@ def combine_group_cols_on_char(df, group_on, combine_cols=None, char='|', sort=F
     :param split: Boolean, if False, will not split the input before uniqifying and rejoining.
             Primarily used to increase processing speed when it is known there are zero character
             joined items in the input. (this may be important on very large datasets)
+    :param prog: Boolean, if True will display tqdm progress bars. False for cleaner output with no bars
 
     :return: Dataframe with 1 row per group, and information of different rows joined by given character.
 
     """
+
     col_order = df.columns
 
     if type(group_on) in (str, int, float):
@@ -116,15 +118,27 @@ def combine_group_cols_on_char(df, group_on, combine_cols=None, char='|', sort=F
         grouped = pd.concat([df[group_on], split_df], axis=1).groupby(group_on)
 
     # Apply the uniqify and comine to each col in the target groups.
-    for col in tqdm(combine_cols, desc='total_progress'):
-        tqdm.pandas(desc=col)
+    # Allow an optinal progress bar
+    if prog:
+        for col in tqdm(combine_cols, desc='total_progress'):
+            tqdm.pandas(desc=col)
 
-        # The split result needs an extra chain
-        if split:
-            out_df[col] = grouped[col].progress_apply(lambda s: char_combine_iter([v for v in chain(*s.values) if v != 'nan']
-                                                                                  , char=char, sort=sort))
-        else:
-            out_df[col] = grouped[col].progress_apply(char_combine_series, char=char, sort=sort)
+            # The split result needs an extra chain
+            if split:
+                out_df[col] = grouped[col].progress_apply(lambda s: char_combine_iter([v for v in chain(*s.values)
+                                                                                       if v != 'nan'],
+                                                                                      char=char, sort=sort))
+            else:
+                out_df[col] = grouped[col].progress_apply(char_combine_series, char=char, sort=sort, split=split)
+    else:
+        for col in combine_cols:
+            # The split result needs an extra chain
+            if split:
+                out_df[col] = grouped[col].apply(lambda s: char_combine_iter([v for v in chain(*s.values) if v != 'nan'],
+                                                                             char=char, sort=sort))
+            else:
+                out_df[col] = grouped[col].apply(char_combine_series, char=char, sort=sort, split=split)
+
 
     return out_df.reset_index()[col_order]
 
