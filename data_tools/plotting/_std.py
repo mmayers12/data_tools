@@ -16,16 +16,26 @@ def count_plot_h(data, annotate=True, **params):
         and plotted at the end of the bars.  (e.g. plot percentages, but annotate with counts).
     :**params: Other arguments to be passed to Seaborn's Barplot function.
     """
-
+    # TODO: Better checks (does't work if obj type and/or nan values)
     # Do the value counts if not already done....
     if data.dtype not in [int, float]:
         data = data.value_counts()
 
-    # Plot the data orderred from most to least frequent
-    splot = sns.barplot(x=data, y=data.index, **params)
+    # Allow for numeric indices (sometimes we want counts of counts)
+    if data.index.dtype in [int, float]:
+        data.index = data.index.astype(str)
+        y = pd.Categorical(data.index)
+    else:
+        y = data.index
 
-    # Allow a series to be passed
+    # Plot the data orderred from most to least frequent
+    splot = sns.barplot(x=data, y=y, order=y, **params)
+
+    # Allow a series to be passed, to annotate with different values
     if type(annotate) == pd.Series:
+        # Ensure numeric keys are converted to strings
+        if annotate.index.dtype in [int, float]:
+            annotate.index = annotate.index.astype(str)
         annotate = annotate.to_dict()
 
     # Optionally Print the counts at the end of the data
