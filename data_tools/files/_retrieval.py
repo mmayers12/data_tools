@@ -1,10 +1,12 @@
 import os as _os
+import pathlib as _pl
 import ftplib as _ftplib
 import urllib as _urllib
+import pickle as _pickle
 import requests as _requests
 
 __all__ = ['get_content_type', 'is_downloadable', 'is_text', 'download_file', 'save_text',
-            'is_ftp', 'download_ftp', 'download']
+            'is_ftp', 'download_ftp', 'download', 'load_api_results']
 
 
 def get_content_type(url):
@@ -117,3 +119,39 @@ def download(url, out_name=None, redownload=False):
         print(file_name, ": Not a downloadable file or text... ")
         print('Skipping....')
 
+
+def load_api_results(res_file_name, re_scrape=False, scrape_function=lambda **f: None, **kwargs):
+    """
+    Wrapper for API scraping functions. Loads results from an api query if on disk. If file does not exit,
+    or rescrape is true, and an api function is passed, the API will be rescraped for data.
+
+    :param res_file_name: string or Path, the filename to load or save to (must be .pkl for now).
+        If `{}` is included in the filename, will glob on that point in the filename and take the highest value
+        (newest if that happpens to correspond to a date). Also, if a download is performed and the file is saved,
+        a `{}` will be filled with the current date in the output file name.
+    :param rescrape: bool, re-download the data even if a file matching the input name already exists.
+    :param scrape_function: the function to be called if the datafile does not exist, or if re_scrape is true.
+    :param **kwargs: any keyword arguments for the scrape funtion.
+
+    :return: Data either loaded from disk or scraped from an api.
+    """
+    # Make sure filname is string
+    if not isinstance(res_file_name, _pl.Path):
+        res_file_path = _pl.Path(res_file_name).resolve()
+    else:
+        res_file_path = res_file_name
+        res_file_name = str(res_file_path)
+
+    dump_files = list(res_file_path.parent.glob(res_file_path.name.format('*')))
+    if len(dump_files) < 1 or re_scrape:
+        # Scrape (or re-scrape) the  API and save
+        res = scrape_function(**kwargs)
+
+        if res:
+            with open(res_file_name.format(datetime.datetime.now().strftime("%Y-%m-%d")), 'wb') as f_out:
+                _pickle.dump(res, f_out)
+    else:
+        # Load the most recent previously saved dump
+        dump_file = sorted(dump_files, reverse=True)[0]
+        res = _pickle.load(open(dump_file, 'rb'))
+    return  res
