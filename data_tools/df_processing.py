@@ -1,6 +1,13 @@
+import re
 import pandas as pd
 from tqdm import tqdm
 from itertools import chain
+
+NONALNUM_PATTERN = re.compile('[\W_]+')
+
+
+def strip_chars(string):
+    return NONALNUM_PATTERN.sub('', string)
 
 
 def char_combine_iter(iterable, char='|', sort=False):
@@ -186,6 +193,36 @@ def expand_split_col(col_split):
     return pd.DataFrame({'old_idx': old_idx, col_name: new_col})
 
 
+def expand_df_on_col(df, col_name, skip_list_check=False):
+    """
+    Take a DataFrame with a column that contains list values and expand the frame's length
+    So that each row now only contains one Element, duplicating values in all other columns.
+    """
+
+    # Copy df and get column order
+    col_order = df.columns
+    out = dict()
+
+    split_col = df[col_name]
+
+    # Allow us to skip itrating throught the list if we KNOW all elements are already non-string iterables
+    if not skip_list_check:
+        split_col = [[i] if type(i) != list else i for i in split_col]
+
+    # expand the rows
+    out[col_name] = chain(*split_col)
+
+    # Now fix the other cols
+    other_cols = [c for c in col_order if c != col_name]
+    lens = [len(s) for s in split_col]
+    for col in other_cols:
+        col_vals = list(chain(*[[v]*l for v, l in zip(df[col].tolist(), lens)]))
+        out[col] = col_vals
+
+    return pd.DataFrame(out)[col_order]
+
+
+
 def expand_col_on_char(df, col_name, char, dropna=False):
     """
     Expands rows in a dataframe due to a column where elements contain multiple values separated by a character,
@@ -213,9 +250,6 @@ def expand_col_on_char(df, col_name, char, dropna=False):
         needed.
     :return: DataFrame, with the extra rows
     """
-    # Copy df and get column order
-    col_order = df.columns
-    out = dict()
 
     if dropna:
         df = df.dropna(subset=[col_name])
@@ -224,17 +258,80 @@ def expand_col_on_char(df, col_name, char, dropna=False):
     else:
         # Split the desired column on the desired character
         split_col = [s.split(char) if type(s) == str else [s] for s in df[col_name].tolist()]
-    # expand the rows
-    out[col_name] = chain(*split_col)
 
-    # Now fix the other cols
-    other_cols = [c for c in col_order if c != col_name]
-    lens = [len(s) for s in split_col]
-    for col in other_cols:
-        col_vals = list(chain(*[[v]*l for v, l in zip(df[col].tolist(), lens)]))
-        out[col] = col_vals
+    out = df.copy()
+    out[col_name] = split_col
 
-    return pd.DataFrame(out)[col_order]
+    return expand_df_on_col(out, col_name, skip_list_check=True)
 
 
+def cammel_to_underscore(name):
+    """Converts CammelCaseNames to underscore_separated_names"""
+    # Get the indicies of capital letters
+    idx_to_change = []
+    for i, letter in enumerate(name):
+        if letter != letter.lower():
+            idx_to_change.append(i)
+
+    # Ensure first section is grabbed when starting with lower case e.g. cammelCaseExamples
+    idx_to_change = [0] + idx_to_change if 0 not in idx_to_change else idx_to_change
+
+    # If strings of caplital letters in a row (e.g. OrchidIDs)
+    # Start with only the first of the string and remove the rest...
+    prev_idx = 0
+    to_remove = []
+    for idx in idx_to_change:
+        if idx - prev_idx == 1:
+            to_remove.append(idx)
+        prev_idx = idx
+    idx_to_change = [x for x in idx_to_change if x not in to_remove]
+
+    # Build the new name
+    out_name = ''
+    for i, start_idx in enumerate(idx_to_change):
+        if i+1 < len(idx_to_change):
+            end_idx = idx_to_change[i+1]
+            out_name += name[start_idx:end_idx].lower() + '_'
+        else:
+            out_name += name[start_idx:].lower()
+    if not out_name:
+        return name
+    return out_name
+
+
+def remove_lead_chars(name):
+    """Strips whitespace and special characters from the start of a string"""
+    start = 0
+    while not name[start].isalpha():
+        start+=1
+    return name[start:]
+
+
+def remove_end_chars(name):
+    """Strips whitespace and special characters from the end of a string"""
+    end = len(name)
+    while not name[end-1].isalnum():
+        end-=1
+    return name[:end]
+
+
+def strip_special_chars(name):
+    """Removes most special characters from a string, keeps [' ', '-', or '_']"""
+    return ''.join([c for c in name if c.isalnum() or c in [' ', '-', '_']])
+
+
+def regularize_colname(name):
+    """Regularize a string to a Pandas queryable name, with underscore separation"""
+    out_name = remove_lead_chars(name)
+    out_name = remove_end_chars(out_name)
+    out_name = strip_special_chars(out_name)
+    if out_name.isidentifier():
+        out_name = cammel_to_underscore(out_name)
+    out_name = out_name.replace(' ', '_').replace('-', '_')
+    return out_name.lower()
+
+
+def regularize_colnames(col_names):
+    """Regularize a list of column names. See regularize_colname"""
+    return [regularize_colname(c) for c in col_names]
 
