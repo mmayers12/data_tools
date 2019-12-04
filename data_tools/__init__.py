@@ -1,4 +1,4 @@
-__all__ = ['graphs', 'files', 'df_processing', 'wiki', 'plotting']
+__all__ = ['graphs', 'files', 'df_processing', 'wiki', 'plotting', 'obo_processing']
 
 from data_tools.files._retrieval import download
 from data_tools.df_processing import add_curi
