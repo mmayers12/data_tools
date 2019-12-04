@@ -4,6 +4,7 @@ import ftplib as _ftplib
 import urllib as _urllib
 import pickle as _pickle
 import requests as _requests
+import datetime as _datetime
 
 __all__ = ['get_content_type', 'is_downloadable', 'is_text', 'download_file', 'save_text',
             'is_ftp', 'download_ftp', 'download', 'load_api_results']
@@ -148,7 +149,7 @@ def load_api_results(res_file_name, re_scrape=False, scrape_function=lambda **f:
         res = scrape_function(**kwargs)
 
         if res:
-            with open(res_file_name.format(datetime.datetime.now().strftime("%Y-%m-%d")), 'wb') as f_out:
+            with open(res_file_name.format(_datetime.datetime.now().strftime("%Y-%m-%d")), 'wb') as f_out:
                 _pickle.dump(res, f_out)
     else:
         # Load the most recent previously saved dump
