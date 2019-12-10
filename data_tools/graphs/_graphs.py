@@ -1,11 +1,12 @@
 import random as _random
 import pandas as _pd
 from collections import OrderedDict as _oDict
+from ..df_processing import combine_group_cols_on_char
 
 __all__ = ['get_direction_from_abbrev', 'get_edge_name', 'map_id_to_value',
             'parse_edge_abbrev', 'get_abbrev_dict_and_edge_tuples', 'combine_nodes_and_edges',
             'get_node_degrees', 'add_colons', 'remove_colons', 'determine_split_string',
-            'order_cols', 'permute_edges', 'permute_graph']
+            'order_cols', 're_id_nodes', 're_id_edges', 'permute_edges', 'permute_graph']
 
 def get_direction_from_abbrev(abbrev):
     """Finds the direction of a metaedge from its abbreviaton"""
@@ -225,6 +226,82 @@ def order_cols(df):
              'end_label']
     order = [o for o in order if o in df.columns]
     return df[order + [c for c in df.columns if c not in order]]
+
+
+def re_id_edges(edges, id_map_df, old_id_col=0, new_id_col=1):
+    """
+    Changes identifiers in an edge DataFrame. Uses merge so 1 to many and many to many mappings are preserved.
+
+    :param edges: DataFrame, edges to be modified
+    :param id_map_df: DataFrame, the mappings from old to new ID. By default column 0 is the old ID and column 1
+        is the new ID.
+    :param old_id_col: int or string, name or index of column of original identifiers.
+    :param new_id_col: int or string, name or index of column of new identifier.
+
+    :return: DataFrame with the new identifiers
+    """
+
+    # If integers passed for columns, reindex to integers
+    if old_id_col in [0, 1] and new_id_col in [0,1]:
+        id_map_df.columns = [0, 1]
+
+    old_ids = id_map_df[old_id_col].values
+
+    # Query for the edges that will not be altered
+    untouched_edges = edges.query('start_id not in @old_ids and end_id not in @old_ids')
+
+    # Change the start edge Identifiers
+    start_edges = edges.query('start_id in @old_ids')
+    start_edges_out = start_edges.merge(id_map_df, left_on='start_id', right_on=old_id_col, how='left')
+    start_edges_out = start_edges_out.drop(['start_id', old_id_col], axis=1).rename(columns={new_id_col: 'start_id'})
+
+    # Change the end edge Identifiers
+    end_edges = edges.query('end_id in @old_ids')
+    end_edges_out = end_edges.merge(id_map_df, left_on='end_id', right_on=old_id_col, how='left')
+    end_edges_out = end_edges_out.drop(['end_id', old_id_col], axis=1).rename(columns={new_id_col: 'end_id'})
+
+    # Concat and return
+    return _pd.concat([untouched_edges, start_edges_out, end_edges_out], sort=False, ignore_index=True)
+
+
+def re_id_nodes(nodes, id_map_df, old_id_col, new_id_col, new_first=True):
+    """
+    Changes identifiers of a Node DataFrame.
+
+    :param nodes: The nodes with the old identifier map
+    :param id_map_df: DataFrame, the mappings from old to new ID.
+    :param old_id_col, str, the name of the column containing the original identifiers.
+    :param new_id_col, str, the name of the column containing the new identifiers.
+    :para new_first: bool, only important if 'id_map_df' contains additional column information like 'name'
+        or 'label.' If True, will use the values in `id_map_df` and fill in missing values with those from `nodes`,
+        if False, will use values from `nodes` before `id_map_df`
+
+    :return: DataFrame of nodes with the updated identifiers
+    """
+    old_ids = id_map_df[old_id_col].values
+
+    untouched_nodes = nodes.query('id not in @old_ids')
+
+    change_nodes = nodes.query('id in @old_ids')
+    change_nodes = change_nodes.merge(id_map_df[[old_id_col, new_id_col]], how='left', left_on='id', right_on=old_id_col)
+    change_nodes = change_nodes.drop(['id', old_id_col], axis=1).rename(columns={new_id_col: 'id'})
+
+    # if new node info is passed (besides the ID), hang on to it.
+    new_node_info = id_map_df[[new_id_col] + [c for c in ['name', 'label', 'xrefs'] if c in id_map_df.columns]]
+    new_node_info = new_node_info.rename(columns={new_id_col: 'id'})
+
+    # Xref Accounting: any mappings performed should be saved into the 'xrefs' column
+    xref_accounting = id_map_df.rename(columns={new_id_col: 'id', old_id_col: 'xrefs'})[['id', 'xrefs']]
+
+    if new_first:
+        out_nodes = [new_node_info, change_nodes, xref_accounting]
+    else:
+        out_nodes = [change_nodes, new_node_info, xref_accounting]
+
+    out_nodes = _pd.concat(out_nodes, ignore_index=True, sort=False)
+    out_nodes = combine_group_cols_on_char(out_nodes, ['id'], ['xrefs'], sort=True, prog=False)
+
+    return _pd.concat([untouched_nodes, out_nodes], sort=False).sort_values(['label', 'id']).reset_index(drop=True)
 
 
 def permute_edges(edges, directed=False, multiplier=10, excluded_edges=None, seed=0):
