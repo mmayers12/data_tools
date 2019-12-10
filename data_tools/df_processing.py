@@ -112,7 +112,14 @@ def combine_group_cols_on_char(df, group_on, combine_cols=None, char='|', sort=F
     if type(group_on) in (str, int, float):
         group_on = [group_on]
 
-    grouped = df.groupby(group_on)
+    # Save computation time by only perfoming the grouping and
+    # Joining when group size > 1
+    dup_idx = df[group_on].duplicated(keep=False)
+    not_duped = df.loc[dup_idx[~dup_idx].index]
+    duped = df.loc[dup_idx[dup_idx].index]
+
+    # do the grouping
+    grouped = duped.groupby(group_on)
 
     if combine_cols is None:
         combine_cols = find_cols_with_multi_values(grouped)
@@ -121,8 +128,8 @@ def combine_group_cols_on_char(df, group_on, combine_cols=None, char='|', sort=F
 
     # Splitting before doing the groupby is much much faster
     if split:
-        split_df = df[combine_cols].applymap(lambda x: str(x).split('|'))
-        grouped = pd.concat([df[group_on], split_df], axis=1).groupby(group_on)
+        split_df = duped[combine_cols].applymap(lambda x: str(x).split('|'))
+        grouped = pd.concat([duped[group_on], split_df], axis=1).groupby(group_on)
 
     # Apply the uniqify and comine to each col in the target groups.
     # Allow an optinal progress bar
@@ -146,8 +153,8 @@ def combine_group_cols_on_char(df, group_on, combine_cols=None, char='|', sort=F
             else:
                 out_df[col] = grouped[col].apply(char_combine_series, char=char, sort=sort, split=split)
 
-
-    return out_df.reset_index()[col_order]
+    # Pasted the fixed lines to the previous lines
+    return pd.concat([not_duped, out_df.reset_index()], sort=False, ignore_index=True)[col_order]
 
 
 def add_curi(data_frame, curi_map):
