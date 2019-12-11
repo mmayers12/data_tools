@@ -7,6 +7,7 @@ install_requires = [
     'pandas',
     'matplotlib_venn',
     'matplotlib>=3.1.1',
+    'seaborn',
     'scikit-learn>=0.21.3',
     'scipy>=1.3.1',
     'wikidataintegrator>=0.4.2'

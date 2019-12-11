@@ -291,7 +291,7 @@ def re_id_nodes(nodes, id_map_df, old_id_col, new_id_col, new_first=True):
     new_node_info = new_node_info.rename(columns={new_id_col: 'id'})
 
     # Xref Accounting: any mappings performed should be saved into the 'xrefs' column
-    xref_accounting = id_map_df.rename(columns={new_id_col: 'id', old_id_col: 'xrefs'})[['id', 'xrefs']]
+    xref_accounting = id_map_df[[new_id_col, old_id_col]].rename(columns={new_id_col: 'id', old_id_col: 'xrefs'})
 
     if new_first:
         out_nodes = [new_node_info, change_nodes, xref_accounting]
