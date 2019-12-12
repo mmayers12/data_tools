@@ -1,7 +1,7 @@
 import re
 import pandas as pd
-from tqdm import tqdm
 from itertools import chain
+from tqdm.autonotebook import tqdm
 
 NONALNUM_PATTERN = re.compile('[\W_]+')
 
@@ -114,6 +114,7 @@ def combine_group_cols_on_char(df, group_on, combine_cols=None, char='|', sort=F
 
     # Save computation time by only perfoming the grouping and
     # Joining when group size > 1
+    df = df.reset_index(drop=True) # ensure unique indices
     dup_idx = df[group_on].duplicated(keep=False)
     not_duped = df.loc[dup_idx[~dup_idx].index]
     duped = df.loc[dup_idx[dup_idx].index]
