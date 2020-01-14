@@ -6,7 +6,9 @@ from ..df_processing import combine_group_cols_on_char
 __all__ = ['get_direction_from_abbrev', 'get_edge_name', 'map_id_to_value',
             'parse_edge_abbrev', 'get_abbrev_dict_and_edge_tuples', 'combine_nodes_and_edges',
             'get_node_degrees', 'add_colons', 'remove_colons', 'determine_split_string',
-            'order_cols', 're_id_nodes', 're_id_edges', 'permute_edges', 'permute_graph']
+            'order_cols', 're_id_nodes', 're_id_edges', 'prune_leaf_nodes', 'get_core_network',
+            'permute_edges', 'permute_graph']
+
 
 def get_direction_from_abbrev(abbrev):
     """Finds the direction of a metaedge from its abbreviaton"""
@@ -304,6 +306,60 @@ def re_id_nodes(nodes, id_map_df, old_id_col, new_id_col, new_first=True):
     return _pd.concat([untouched_nodes, out_nodes], sort=False).sort_values(['label', 'id']).reset_index(drop=True)
 
 
+def prune_leaf_nodes(nodes, edges, allow_types=None, allow_ids=None):
+    """
+    Remove leaf nodes from a network. allow_types lists node types ignore pruning, allow_ids ignores individal nodes.
+    """
+
+    if allow_types is None:
+        allow_types = []
+    if allow_ids is None:
+        allow_ids = []
+
+    to_prune = edges[['start_id', 'end_id']].stack().value_counts() == 1
+    to_prune = to_prune[to_prune].index
+
+    to_prune = set(nodes.query('id in @to_prune and label not in @allow_types')['id'])
+    to_prune = to_prune - set(allow_ids)
+
+    new_nodes = nodes.query('id not in @to_prune').copy()
+    new_edges = edges.query('start_id not in @to_prune and end_id not in @to_prune').copy()
+
+    return new_nodes, new_edges
+
+
+def get_core_network(nodes, edges, allow_types=None, allow_ids=None):
+    """
+    Returns a 'core network' where all nodes are doubly connected (degree >= 2) through successive leaf pruning.
+
+    :param nodes: DataFrame, the nodes for the network
+    :param edges: DataFrame, the edges for the network
+    :param allow_types: list of str, Node types (`label` column) to allow leaves (degree 1).
+    :param allow_ids: list of str, node identifiers for nodes to not remove even if they have degree 1
+
+    :returns: core_nodes, core_edges, DataFrames with all nodes degree >= 2 (excpet for allow arugments)
+    """
+
+    if allow_types is None:
+        allow_types = []
+    if allow_ids is None:
+        allow_ids = set()
+    elif type(allow_ids) != set:
+        allow_ids = set(allow_ids)
+
+    nodes_out = nodes.copy()
+    edges_out = edges.copy()
+
+    new_nodes_out, new_edges_out = prune_leaf_nodes(nodes_out, edges_out, allow_types, allow_ids)
+
+    while(len(new_nodes_out) != len(nodes_out)):
+        nodes_out = new_nodes_out.copy()
+        edges_out = new_edges_out.copy()
+        new_nodes_out, new_edges_out = prune_leaf_nodes(nodes_out, edges_out, allow_types, allow_ids)
+
+    return nodes_out.reset_index(drop=True), edges_out.reset_index(drop=True)
+
+
 def permute_edges(edges, directed=False, multiplier=10, excluded_edges=None, seed=0):
     """
     Permutes the edges of one metaedge in a graph while preserving the degree of each node.
@@ -470,3 +526,4 @@ def permute_graph(edges, multiplier=10, excluded_edges=None, seed=0):
     permuted_graph = permuted_graph.rename(columns=col_name_mapper)
 
     return permuted_graph, stats
+
