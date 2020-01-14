@@ -140,9 +140,23 @@ def load_api_results(res_file_name, re_scrape=False, scrape_function=lambda **f:
     if not isinstance(res_file_name, _pl.Path):
         res_file_path = _pl.Path(res_file_name).resolve()
     else:
-        res_file_path = res_file_name
+        res_file_path = res_file_name.resolve()
         res_file_name = str(res_file_path)
 
+    # Ensure we have a formatting characters so we can glob to load and save with date
+    if '{}' not in res_file_path.name:
+        # record the parent directory
+        parent_path = res_file_path.parent
+
+        # add a formatting char before the first .
+        n_spl = res_file_path.name.split('.')
+        new_name = n_spl[0] + '_{}.' + '.'.join(n_spl[1:])
+
+        # rebuild the path and file names
+        res_file_path = Path(parent_path).joinpath(new_name)
+        res_file_name = str(res_file_path)
+
+    # Glob for dump files and if there are more than one, take the most recent
     dump_files = list(res_file_path.parent.glob(res_file_path.name.format('*')))
     if len(dump_files) < 1 or re_scrape:
         # Scrape (or re-scrape) the  API and save
@@ -156,3 +170,4 @@ def load_api_results(res_file_name, re_scrape=False, scrape_function=lambda **f:
         dump_file = sorted(dump_files, reverse=True)[0]
         res = _pickle.load(open(dump_file, 'rb'))
     return  res
+
