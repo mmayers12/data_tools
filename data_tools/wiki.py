@@ -21,7 +21,7 @@ def execute_sparql_query(query_text, endpoint='https://query.wikidata.org/sparql
     query_func = functools.partial(WDItemEngine.execute_sparql_query, endpoint=endpoint, as_dataframe=True)
 
     # Enforce the proper column order
-    col_order = query_text.split('\n')[0].strip().split(' ?')[1:]
+    col_order = query_text.lstrip('\n').split('\n')[0].strip().split(' ?')[1:]
     qres = query_func(query_text)
     if len(qres) == 0:
         return None
