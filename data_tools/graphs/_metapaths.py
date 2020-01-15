@@ -5,9 +5,10 @@ from hetnetpy.hetnet import MetaGraph as _MetaGraph, MetaEdge as _MetaEdge
 from ._graphs import get_abbrev_dict_and_edge_tuples
 
 
-__all__ = ['dataframes_to_metagraph', 'metapaths_to_json', 'subset_mps_by_node_count',
-           'extract_mp_edges', 'extract_mp_nodes', 'metapath_to_list', 'print_path_list', 'print_metapath',
-           ]
+__all__ = ['dataframes_to_metagraph', 'metapaths_to_json', 'get_mn_abbrevs', 'get_e_type_abbrev',
+           'extract_mp_edges', 'extract_mp_nodes', 'nodes_and_edges_to_path', 'metapath_to_list',
+           'print_path_list', 'print_metapath', 'is_directed', 'find_inverted_edges', 'find_directed_inversion',
+           'find-node_index', 'is_similarity', 'subset_mps_by_node_count']
 
 
 def dataframes_to_metagraph(nodes, edges):
