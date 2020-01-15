@@ -1,7 +1,7 @@
 import re as _re
 from collections import Counter as _Counter
 from collections import defaultdict as _defaultdict
-from hetnetpy.hetnet import MetaGraph as _MetaGraph, MetaEdge as _MetaEdge
+from hetnetpy.hetnet import MetaGraph as _MetaGraph, MetaEdge as _MetaEdge, MetaPath as _MetaPath
 from ._graphs import get_abbrev_dict_and_edge_tuples
 
 
@@ -55,7 +55,7 @@ def extract_mp_edges(mp, rev_map=None, abbrevs=False):
     :return: list of strings, the edge names in the metapath, in order of appearance
     """
     # Allow for hetnetpy.hetnet.MetaPath
-    if type(mp) == MetaPath:
+    if type(mp) == _MetaPath:
 
         if abbrevs:
             edges = [_re.sub("[<>]", "", e.kind_abbrev) for e in mp.edges]
@@ -98,7 +98,7 @@ def extract_mp_nodes(mp, abbrevs=False):
     """
 
     # Allow for hetnetpy.hetnet.MetaPath
-    if type(mp) == MetaPath:
+    if type(mp) == _MetaPath:
         nodes = [e.source for e in mp.edges] + [mp.edges[-1].target]
         if not abbrevs:
             return [str(n) for n in nodes]
@@ -190,7 +190,7 @@ def is_directed(mp, directed_map):
 
 def find_inverted_edges(mp):
     """Find the edges that are inveted within a metapath. Returns as a boolean list"""
-    if type(mp) == MetaPath:
+    if type(mp) == _MetaPath:
         return [e.inverted for e in mp.edges]
     elif type(mp) == dict and 'edges' in mp:
         return [(abv != sabv) and ('>' not in abv) for abv, sabv in
