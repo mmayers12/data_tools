@@ -213,7 +213,7 @@ def find_node_index(mp, node_names):
         test_names = node_names
 
     metanodes = extract_mp_nodes(mp)
-    return [i for i, m_node in enumerate(metanodes) if m_node in test_namesj
+    return [i for i, m_node in enumerate(metanodes) if m_node in test_names]
 
 
 def is_similarity(mp, node_names, directed_map, max_repeats=2, check_dir='fwd', blacklist_edges=None):
