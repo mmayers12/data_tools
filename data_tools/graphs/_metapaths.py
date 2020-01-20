@@ -218,6 +218,26 @@ def find_node_index(mp, node_names):
     return [i for i, m_node in enumerate(metanodes) if m_node in test_names]
 
 
+def inv_target(mp, directed_map, target_edges=None):
+    """
+    Method to reveal metapaths that contain inverted target edges
+
+    Target edges can contain a lot of information in a mode. Inverted target edges can potentitall be
+    an indicator of a similarity edge:
+    E.G. compound-reduces-Gene-upregulated_in-Phenotype-Treated_by-Gene-down_regulated_in-Disease
+    The treated by edge contains a lot of information potnetially making this a Phenotype-Disease
+    Similarity edge
+    """
+    if target_edges is None:
+        target_edges = ['treats', 'therapeutic', 'marker_or_mechanism', 'diagnoses', 'palliates', 'prevents']
+
+    dir_inv = find_directed_inversion(mp, directed_map)
+    for i, di in enumerate(dir_inv):
+        if di and mp.edges[i].kind in target_edges:
+            return True
+    return False
+
+
 def is_similarity(mp, node_names, directed_map, max_repeats=2, check_dir='fwd', blacklist_edges=None):
     """
     Check to see if this path expresses similarity between two concepts.  Designed and tested
