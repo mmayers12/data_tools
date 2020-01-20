@@ -1,5 +1,7 @@
 import numpy as np
 import pandas as pd
+from copy import deepcopy
+from tqdm.auto import tqdm
 
 def add_percentile_for_grp(in_df, group_col, new_col, sort_col='prediction'):
 
@@ -46,4 +48,50 @@ def get_model_coefs(model, X, f_names):
 
     # Return
     return pd.DataFrame([names, coef, z_coef]).T.rename(columns={0:'feature', 1:'coef', 2:'zcoef'})
+
+
+
+def piecewise_extraction(function, to_split, block_size=1000, axis=0, ignore_cols=None, **params):
+    """
+    Run hetnet_ml.extractor.MatrixFormattedGraph feature extraction methods in a piecewise manner
+    """
+
+    assert type(to_split) == str and to_split in params
+
+    # Won't want progress bars for each subsetx
+    params['verbose'] = False
+
+    # Retain a copy of the original parameters
+    full_params = deepcopy(params)
+    total = len(params[to_split])
+
+    # Determine the number of iterations needed
+    num_iter = total // block_size
+    if total % block_size != 0:
+        num_iter += 1
+
+    all_results = []
+    for i in tqdm(range(num_iter)):
+
+        # Get the start and end indicies
+        start = i * block_size
+        end = (i+1) * block_size
+
+        # End can't be larger than the total number items
+        if end > total:
+            end = total
+
+        # Subset the paramter of interest
+        params[to_split] = full_params[to_split][start: end]
+
+        # Get the funciton results
+        all_results.append(function(**params))
+
+    if ignore_cols is not None:
+        to_cat = [r.drop(ignore_cols, axis=axis) if i > 0 else r for i, r in enumerate(all_results)]
+    else:
+        to_cat = all_results
+
+    return pd.concat(to_cat, sort=False, axis=axis)
+
 
