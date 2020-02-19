@@ -51,10 +51,10 @@ def add_abbrevs(nodes, edges, kind_to_abbrev=None, type_to_dir=None):
     # Get all the types and labels to ensure that all are mapped
     all_kinds = nodes['label'].unique().tolist() + edges['type'].unique().tolist()
 
-    # Make sure all edge types are classified as directed, and if not, throw an error
+    # Make sure all edge types are classifiable as directed or not. If missing, throw an error
     # before doing any expenive mappings
     if type_to_dir is not None:
-        assert len(set(type_to_dir.keys()) - set(all_kinds)) == 0
+        assert len(set(all_kinds) - set(type_to_dir.keys())) == 0
 
     # Do simple abbreviation generation if not passed
     if kind_to_abbrev is None:
