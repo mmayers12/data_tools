@@ -56,6 +56,7 @@ def _venn_pretty(subsets, num_circles, set_labels=('A', 'B'),  title='',
         p.set_linewidth(2)
     # Give the plot a title
     plt.title(title, size=t_size);
+    return v
 
 
 def venn2_pretty(subsets, set_labels=('A', 'B'),  title='',
@@ -65,7 +66,7 @@ def venn2_pretty(subsets, set_labels=('A', 'B'),  title='',
     Wrapper function for matplotlib_venn.venn2 that uses more aesthetically pleasing
     colors, text style, and line style.
     """
-    _venn_pretty(subsets, 2, set_labels, title, alpha, norm, lw, num_size, lbl_size, t_size, colors, ax, border)
+    return _venn_pretty(subsets, 2, set_labels, title, alpha, norm, lw, num_size, lbl_size, t_size, colors, ax, border)
 
 
 def venn3_pretty(subsets, set_labels=('A', 'B', 'C'),  title='',
@@ -75,5 +76,5 @@ def venn3_pretty(subsets, set_labels=('A', 'B', 'C'),  title='',
     Wrapper function for matplotlib_venn.venn3 that uses more aesthetically pleasing
     colors, text style, and line style.
     """
-    _venn_pretty(subsets, 3, set_labels, title, alpha, norm, lw, num_size, lbl_size, t_size, colors, ax, border)
+    return _venn_pretty(subsets, 3, set_labels, title, alpha, norm, lw, num_size, lbl_size, t_size, colors, ax, border)
 
