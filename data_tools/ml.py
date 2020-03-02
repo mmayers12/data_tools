@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd
 from copy import deepcopy
 from tqdm.auto import tqdm
+from sklearn.base import TransformerMixin
+from scipy.sparse import csc_matrix, csr_matrix, issparse
 
 def add_percentile_for_grp(in_df, group_col, new_col, sort_col='prediction'):
 
@@ -42,56 +44,68 @@ def get_model_coefs(model, X, f_names):
     names = np.insert(f_names, 0, 'intercept')
 
     # Calculate z-score scaled coefficients based on the features
-    z_intercept = coef[0] + sum(coef[1:] * X.mean(axis=0))
-    z_coef = coef[1:] * X.std(axis=0)
-    z_coef = np.insert(z_coef, 0, z_intercept)
+    if issparse(X):
+        if type(X) != csc_matrix:
+            X = X.tocoo().tocsc()
+        z_intercept = coef[0] + sum(coef[1:] * X.mean(axis=0).A[0])
+        z_coef = coef[1:] * sparse_std(X, axis=1)
+        z_coef = np.insert(z_coef, 0, z_intercept)
+    else:
+        z_intercept = coef[0] + sum(coef[1:] * X.mean(axis=0))
+        z_coef = coef[1:] * X.std(axis=0)
+        z_coef = np.insert(z_coef, 0, z_intercept)
 
     # Return
     return pd.DataFrame([names, coef, z_coef]).T.rename(columns={0:'feature', 1:'coef', 2:'zcoef'})
 
 
+def sparse_std(data, axis=1):
+    """Take the standard deviation of a sparse matrix. axis=0 is Rows, axis=1 is columns."""
 
-def piecewise_extraction(function, to_split, block_size=1000, axis=0, ignore_cols=None, **params):
-    """
-    Run hetnet_ml.extractor.MatrixFormattedGraph feature extraction methods in a piecewise manner
-    """
+    def get_vec_std(vec):
+        return vec.A.std(ddof=1)
 
-    assert type(to_split) == str and to_split in params
+    stds = []
 
-    # Won't want progress bars for each subsetx
-    params['verbose'] = False
+    # ensure the correct matrix type for easy row or column subsetting
+    if axis==1 and type(data) != csc_matrix:
+        data = data.tocoo().tocsc()
+    if axis==0 and type(data) != csr_matrix:
+        data = data.tocoo().tocsr()
 
-    # Retain a copy of the original parameters
-    full_params = deepcopy(params)
-    total = len(params[to_split])
+    # Get the std for each vector along the given axis individually
+    for i in range(data.shape[axis]):
+        if axis==1:
+            stds.append(get_vec_std(data.getcol(i)))
+        elif axis==0:
+            stds.append(get_vec_std(data.getrow(i)))
 
-    # Determine the number of iterations needed
-    num_iter = total // block_size
-    if total % block_size != 0:
-        num_iter += 1
+    return np.array(stds)
 
-    all_results = []
-    for i in tqdm(range(num_iter)):
 
-        # Get the start and end indicies
-        start = i * block_size
-        end = (i+1) * block_size
+class MeanScaledArcsinhTransformer(TransformerMixin):
 
-        # End can't be larger than the total number items
-        if end > total:
-            end = total
+    def fit(self, X, y=None):
+        if issparse(X):
+            self.initial_mean_ = X.tocoo().tocsc().mean(axis=0).A[0]
+        else:
+            self.initial_mean_ = X.mean(axis=0)
 
-        # Subset the paramter of interest
-        params[to_split] = full_params[to_split][start: end]
+        # If input was DataFrame, Converts resultant series to ndarray
+        try:
+            self.initial_mean_ = self.initial_mean_.values
+        except:
+            pass
 
-        # Get the funciton results
-        all_results.append(function(**params))
+        # If inital mean == 0, likely all values were zero
+        # this prevents issues later.
+        self.initial_mean_[np.where(self.initial_mean_ == 0.0)] = 1
 
-    if ignore_cols is not None:
-        to_cat = [r.drop(ignore_cols, axis=axis) if i > 0 else r for i, r in enumerate(all_results)]
-    else:
-        to_cat = all_results
+        return self
 
-    return pd.concat(to_cat, sort=False, axis=axis)
+    def transform(self, X, y=None):
+        if issparse(X):
+            return np.arcsinh(X.tocoo().tocsc().multiply(self.initial_mean_**-1)).tocsc()
+        return np.arcsinh(X / self.initial_mean_)
 
 
