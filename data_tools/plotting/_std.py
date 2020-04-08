@@ -4,7 +4,7 @@ import seaborn as sns
 
 __all__ = ['count_plot_h']
 
-def count_plot_h(data, annotate=True, order=None, **params):
+def count_plot_h(data, annotate=True, order=None, annot_params=None, **params):
     """
     Wrapper for seaborn's Barpolot with horizontal result. Functions like sns.countplot(), but also allows for
     the result of Series.value_counts() to be passed as an argument.
@@ -48,6 +48,9 @@ def count_plot_h(data, annotate=True, order=None, **params):
 
     # Optionally Print the counts at the end of the data
     if annotate:
+        if annot_params is None or type(annot_params) != dict:
+            annot_params = dict()
+
         # Allow for user-passed annotation map, or simply annotate the values
         if type(annotate) == bool:
             annotate = data.to_dict()
@@ -66,5 +69,6 @@ def count_plot_h(data, annotate=True, order=None, **params):
         for (p, n) in zip(splot.patches, splot.get_yticklabels()):
             annotation = annotate[n.get_text()]
             splot.annotate(fs.format(f(annotation)), (p.get_width(), p.get_y() + p.get_height()),
-                           ha = 'left', va = 'center_baseline', xytext = (0, 10), textcoords = 'offset points')
+                           ha = 'left', va = 'center_baseline', xytext = (0, 10), textcoords = 'offset points'
+                           **annot_params)
 
