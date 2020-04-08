@@ -56,9 +56,12 @@ def count_plot_h(data, annotate=True, order=None, **params):
         if pd.Series(annotate).dtype == int:
             f = lambda v: int(v)
             fs = '{:,}'
-        else:
+        elif pd.Series(annotate).dtype == float:
             f = lambda v: v
             fs = '{:,.2}'
+        else:
+            f = lambda v: v
+            fs = '{}'
 
         for (p, n) in zip(splot.patches, splot.get_yticklabels()):
             annotation = annotate[n.get_text()]
