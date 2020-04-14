@@ -69,6 +69,7 @@ def count_plot_h(data, annotate=True, order=None, annot_params=None, **params):
         for (p, n) in zip(splot.patches, splot.get_yticklabels()):
             annotation = annotate[n.get_text()]
             splot.annotate(fs.format(f(annotation)), (p.get_width(), p.get_y() + p.get_height()),
-                           ha = 'left', va = 'center_baseline', xytext = (0, 10), textcoords = 'offset points'
+                           ha = 'left', va = 'center_baseline', xytext = (0, 10), textcoords = 'offset points',
                            **annot_params)
+    return splot
 
