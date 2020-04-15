@@ -10,7 +10,7 @@ from scipy.spatial import distance
 
 __all__ = ['shift_centers_to_min_distance', 'darken_hex_color', 'determine_text_color',
     'prep_node_labels', 'determine_node_position', 'parse_metapath_to_edge_names',
-    'get_edge_weights_from_path_weights', 'build_subgraph_from_paths', ' highlight_path_of_interest',
+    'get_edge_weights_from_path_weights', 'build_subgraph_from_paths', 'highlight_path_of_interest',
     'build_explanitory_graph', 'draw_explanitory_graph']
 
 
@@ -341,7 +341,34 @@ def build_explanitory_graph(list_of_paths, list_of_edges=None, path_weights=None
     Builds an explantory graph from minimally a list of paths. More parameters can be passed to build a more
     complete and expressive graph.
 
+    :param list_of_paths: list of lists, inner list contains node ids within a single path,
+        outer list is a list of these paths
+    :param list_of_edges: list of lists, Optional. Inner list is the semmantic type for each edge in a path,
+        outer list is a list of these paths. Requred to be same length as list_of_paths.
+    :param path_weights: list of float, Optional. requred to be same length as list_of_paths.
+        Weights should be between 0 and 1. Should not be used with `edge_weights`, or values
+        will be overriden.
+    :param edge_weights: dict, Optional. Key is edge tuple, value is weight, ideally between 0 and 1.
+        If no values passed for `list_of_edges`, key must be (start_id, end_id) for an edge, or weights.
+        will be igorned. If `list_of_edges` is passed, then key should be (start_id, end_id, edge_type),
+        but if edge_type missing, the same wight will be applied to all edges between start_id, end_id.
+        `edge_weights` will override `path_weights` if both paramaters are provided.
+    :param node_id_to_color: dict, Optional. Provides color for a node. Key: node identifier,
+        value: hex color for node, e.g. '#1f77b4'.
+    :param node_id_to_label: dict, Optinal. Provides types or labels for nodes. Will be used to
+        to color nodes by label if `node_id_to_color` is None. Colors determined by current
+        seaborn.color_palette(). If palette has fewer colors than number of node labels, then
+        a seaborn.hls_palette() with the numer of node labels will be utilized.
+    :param edge_id_to_color: dict, Optional. Key is edge tuple, value is hex color for edge.
+        If no values passed for `list_of_edges`, key must be (start_id, end_id) for an edge, or colors
+        will be igorned. If `list_of_edges` is passed, then key should be (start_id, end_id, edge_type).
+        Ideally, use `highlight_path_of_interest` to generate this mapping dictionay.
+    :param min_dist: float, the minmum distance each node will be from each other in the final graph.
+    :param xscale: a scaling factor for the width of the network. X position for paths will start at,
+        0 and end at xscale. Y position is path number. `min_dist` will be is built on this scale.
 
+    :return: networkx Graph (DiGraph or MultiDiGraph depending on whether or not `list_of_edges` was passed).
+        Graph can be used on it's on as input for `draw_explanitory_graph`.
     """
 
     # Build node and edge data
@@ -353,10 +380,17 @@ def build_explanitory_graph(list_of_paths, list_of_edges=None, path_weights=None
 
     # Add edge weights if passed
     if edge_weights is not None:
-        if 'label' in subgraph:
-            subgraph['weight'] = subgraph.apply(lambda row: edge_weights[(row[0], row[1], row[2])], axis=1)
+        first_key = list(edge_weights.keys())[0]
+        # Fill weights with mapping tuple for edge
+        if len(first_key) == 3 and 'key' in subgraph:
+            subgraph['weight'] = subgraph[['u_for_edge', 'v_for_edge', 'key']].apply(tuple, axis=1)
+        elif len(first_key) == 3:
+            print('Provided edge weights with edge types,  but no edge types in graph. Ignoring weights.')
         else:
-            subgraph['weight'] = subgraph.apply(lambda row: edge_weights[(row[0], row[1])], axis=1)
+            subgraph['weight'] = subgraph[['u_for_edge', 'v_for_edge']].apply(tuple, axis=1)
+        # Map the edge key to the weight
+        if 'weight' in subgraph:
+            subgraph['weight'] = subgraph['weight'].map(edge_weights)
 
     # Set default edge weight if none passed
     if 'weight' not in subgraph:
@@ -390,12 +424,13 @@ def build_explanitory_graph(list_of_paths, list_of_edges=None, path_weights=None
     if edge_id_to_color is not None:
         first_key = list(edge_id_to_color.keys())[0]
         # Fill colors with mapping tuple for edge
-        if len(first_key) == 2:
-            subgraph['color'] = subgraph[['u_for_edge', 'v_for_edge']].apply(tuple, axis=1)
-        else:
+        if len(first_key) == 3 and 'key' in subgraph:
             subgraph['color'] = subgraph[['u_for_edge', 'v_for_edge', 'key']].apply(tuple, axis=1)
+        else:
+            subgraph['color'] = subgraph[['u_for_edge', 'v_for_edge']].apply(tuple, axis=1)
         # Map the edge key to the color
-        subgraph['color'] = subgraph['color'].map(edge_id_to_color)
+        if 'color' in subgraph:
+            subgraph['color'] = subgraph['color'].map(edge_id_to_color)
     else:
         subgraph['color'] = sns.color_palette().as_hex()[2]
 

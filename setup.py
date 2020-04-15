@@ -18,7 +18,7 @@ setup(
     author='Mike Mayers',
     author_email='mmayers@scripps.edu',
     url='https://github.com/mmayers12/data_tools',
-    version='0.0.3',
+    version='0.0.4',
     packages=find_packages(),
     license='LICENSE',
     description='Tools for manipulating data, particularly with the end goal of forming hetnet',
