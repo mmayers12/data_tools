@@ -218,7 +218,7 @@ def expand_df_on_col(df, col_name, skip_list_check=False):
         split_col = [[i] if type(i) != list else i for i in split_col]
 
     # expand the rows
-    out[col_name] = chain(*split_col)
+    out[col_name] = list(chain(*split_col))
 
     # Now fix the other cols
     other_cols = [c for c in col_order if c != col_name]
