@@ -14,7 +14,7 @@ __all__ = ['shift_centers_to_min_distance', 'darken_hex_color', 'determine_text_
     'build_explanitory_graph', 'draw_explanitory_graph']
 
 
-def shift_centers_to_min_distance(center_data, min_distance=1.5):
+def shift_centers_to_min_distance(center_data, min_distance=1.2):
     """
     Given x,y positions, changes the positions until `min_distance` apart.
     Two elements that are closer than `min_distance` apart, will be pushed in opposite directions
@@ -164,7 +164,7 @@ def prep_node_labels(label, max_line_len, spl_chars=None):
     return out
 
 
-def determine_node_position(list_of_paths, node_id_to_label=None, xscale=10, min_dist=1.75):
+def determine_node_position(list_of_paths, node_id_to_label=None, xscale=10, min_dist=1.2):
     """
     Determines the positions for nodes in an explanitory graph
 
@@ -182,6 +182,7 @@ def determine_node_position(list_of_paths, node_id_to_label=None, xscale=10, min
 
     node_positions = defaultdict(list)
     num_paths = len(list_of_paths)
+    yscale = num_paths * min_dist
 
     # Keep track of nodes that appear first for better positioning
     node_num = 0
@@ -193,7 +194,7 @@ def determine_node_position(list_of_paths, node_id_to_label=None, xscale=10, min
             else:
                 node_positions['label'].append('NA')
             node_positions['x'].append((i / (len(path) - 1)) * xscale)
-            node_positions['y'].append((1 - (n / (num_paths - 1 ))) * num_paths)
+            node_positions['y'].append((1 - (n / (num_paths - 1 ))) * yscale)
             node_positions['node_num'].append(node_num)
             node_num += 1
 
@@ -336,7 +337,7 @@ def highlight_path_of_interest(list_of_paths, path_of_interest):
 
 def build_explanitory_graph(list_of_paths, list_of_edges=None, path_weights=None, edge_weights=None,
                             node_id_to_color=None, node_id_to_label=None, edge_id_to_color=None,
-                            min_dist=1.75, xscale=10):
+                            min_dist=1.2, xscale=10):
     """
     Builds an explantory graph from minimally a list of paths. More parameters can be passed to build a more
     complete and expressive graph.
@@ -372,7 +373,7 @@ def build_explanitory_graph(list_of_paths, list_of_edges=None, path_weights=None
     """
 
     # Build node and edge data
-    node_positions = determine_node_position(list_of_paths, node_id_to_label)
+    node_positions = determine_node_position(list_of_paths, node_id_to_label, xscale, min_dist)
     node_info = pd.DataFrame(node_positions).T.reset_index()
     node_info.columns = ['node_for_adding', 'x', 'y']
 
@@ -448,11 +449,10 @@ def build_explanitory_graph(list_of_paths, list_of_edges=None, path_weights=None
     return G
 
 
-def draw_explanitory_graph(G, node_id_to_name=None, proba=None, n_paths=10, xscale=10, max_line_len=15):
+def draw_explanitory_graph(G, node_id_to_name=None, proba=None, n_paths=None, xscale=10, max_line_len=15, title=True):
     """
     Funciton to draw an explanatory graph. Ideally the graph should be genrated from the fucntion
     `build_explanitory_graph`.  All required values for plotting will be added by using that function.
-
     :param G: networkx Graph, MultiGraph, DiGraph, or MultiDigraph.  Specific values are required in the
         nodes and edges for proper drawing:
             Nodes: 'x': x position for drawing, 'y': y position for drawing, 'color': hex color for the node
@@ -460,16 +460,23 @@ def draw_explanitory_graph(G, node_id_to_name=None, proba=None, n_paths=10, xsca
         For best results, use `build_explanitory_graph` function for producing G.
     :param node_id_to_name: dict, identifer of nodes in G to name, for printing node labels in graph
     :param proba: float, a value to be printed next to the name of the start node... primarily used for
-        probability of treatment in a machine learning context
-    :param n_paths: int, The number of paths in G. Will help determine height dimensions of figure
+        probability of treatment in a machine learning context. Requires title=True to appear
+    :param n_paths: int, y scaling factor. Total height of the figure. If None, will use values pre-determined when
+        building G.
     :param xscale: int, The scaling facor for the x axis
     :param max_line_len: int, the Maximum length of the line for node text labels
-
+    :param title: bool, if true, will pull out the first node in the paths as a title
     :return: matplotlib figure
     """
 
     width = 12 * xscale/10
-    height = n_paths
+
+    max_y = max([G.nodes[n]['y'] for n in G.nodes])
+
+    if n_paths is not None:
+        height = n_paths
+    else:
+        height= max_y
 
     if height / width > 1.3:
         width = height / 1.3
@@ -523,18 +530,20 @@ def draw_explanitory_graph(G, node_id_to_name=None, proba=None, n_paths=10, xsca
     for v in wt_labels.values():
         v.set_path_effects([pe.withStroke(linewidth=2, foreground='k')])
 
-    # Add probabilities
-    first_node = list(G.nodes)[0]
-    first_text = node_id_to_name[first_node]
+    if title:
+        # Add probabilities
+        first_node = list(G.nodes)[0]
+        first_text = node_id_to_name[first_node]
 
-    if proba is not None:
-        first_text += ': {:1.3f}'.format(proba)
+        if proba is not None:
+            first_text += ': {:1.3f}'.format(proba)
 
-    # Color the same as the Node
-    first_color = G.nodes[first_node]['color']
-    text = plt.text(0, height, first_text, c=first_color, size=16, fontweight='bold')
-    # If a light color, Add a dark outline for readability
-    if determine_text_color(first_color, .6) == 'k':
-        text.set_path_effects([pe.withStroke(linewidth=2, foreground=darken_hex_color(first_color))])
+        # Color the same as the Node
+        first_color = G.nodes[first_node]['color']
+        text = plt.text(0, max_y, first_text, c=first_color, size=16, fontweight='bold')
+        # If a light color, Add a dark outline for readability
+        if determine_text_color(first_color, .6) == 'k':
+            text.set_path_effects([pe.withStroke(linewidth=2, foreground=darken_hex_color(first_color))])
+
     fig.set_tight_layout(True)
     return fig
