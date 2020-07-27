@@ -59,7 +59,7 @@ To use functions in this library import them into your script.
 
 Project is currently under heavy development. Methods and features are subject to change greatly on subsequent versions.
 
-Current version is 0.0.3.
+Current version is 0.0.5.
 
 ## Credits
 
