@@ -257,8 +257,13 @@ def re_id_edges(edges, id_map_df, old_id_col=0, new_id_col=1):
     start_edges_out = start_edges.merge(id_map_df, left_on='start_id', right_on=old_id_col, how='left')
     start_edges_out = start_edges_out.drop(['start_id', old_id_col], axis=1).rename(columns={new_id_col: 'start_id'})
 
+    # Edges with both ids needing changes
+    both_edges = start_edges_out.query('end_id in @old_ids')
+    start_edges_out = start_edges_out.query('end_id not in @old_ids')
+
     # Change the end edge Identifiers
-    end_edges = edges.query('end_id in @old_ids')
+    end_edges = edges.query('end_id in @old_ids and start_id not in @old_ids')
+    end_edges = _pd.concat([end_edges, both_edges], sort=False)
     end_edges_out = end_edges.merge(id_map_df, left_on='end_id', right_on=old_id_col, how='left')
     end_edges_out = end_edges_out.drop(['end_id', old_id_col], axis=1).rename(columns={new_id_col: 'end_id'})
 
