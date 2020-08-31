@@ -290,7 +290,7 @@ def is_similarity(mp, node_names, directed_map, max_repeats=2, check_dir='fwd', 
         second_idx = test_idx[idx + 1]
 
         # Make sure there's a non-inveretd directed edge between the two items of interest
-        if sum(dir_non_inv[first_idx: second_idx-1]) == 0:
+        if sum(dir_non_inv[first_idx: second_idx]) == 0:
             return True
 
         # make sure the second instance of the test object is not preceeded by a Directed Inversion
