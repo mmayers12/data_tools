@@ -153,7 +153,7 @@ def load_api_results(res_file_name, re_scrape=False, scrape_function=lambda **f:
         new_name = n_spl[0] + '_{}.' + '.'.join(n_spl[1:])
 
         # rebuild the path and file names
-        res_file_path = Path(parent_path).joinpath(new_name)
+        res_file_path = _pl.Path(parent_path).joinpath(new_name)
         res_file_name = str(res_file_path)
 
     # Glob for dump files and if there are more than one, take the most recent
