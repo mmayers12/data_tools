@@ -186,6 +186,7 @@ def determine_node_position(list_of_paths, node_id_to_label=None, xscale=10, min
 
     # Keep track of nodes that appear first for better positioning
     node_num = 0
+    dof = max(num_paths-1, 1) # Prevent divide by zero errors
     for n, path in enumerate(list_of_paths):
         for i, node in enumerate(path):
             node_positions['node'].append(node)
@@ -194,7 +195,7 @@ def determine_node_position(list_of_paths, node_id_to_label=None, xscale=10, min
             else:
                 node_positions['label'].append('NA')
             node_positions['x'].append((i / (len(path) - 1)) * xscale)
-            node_positions['y'].append((1 - (n / (num_paths - 1 ))) * yscale)
+            node_positions['y'].append((1 - (n / dof)) * yscale)
             node_positions['node_num'].append(node_num)
             node_num += 1
 
