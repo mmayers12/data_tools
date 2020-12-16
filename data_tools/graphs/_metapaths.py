@@ -8,7 +8,7 @@ from ._graphs import get_abbrev_dict_and_edge_tuples
 __all__ = ['dataframes_to_metagraph', 'metapaths_to_json', 'get_mn_abbrevs', 'get_e_type_abbrev',
            'extract_mp_edges', 'extract_mp_nodes', 'nodes_and_edges_to_path', 'metapath_to_list',
            'print_path_list', 'print_metapath', 'is_directed', 'find_inverted_edges', 'find_directed_inversion',
-           'find_node_index', 'inv_target', 'is_similarity', 'subset_mps_by_node_count']
+           'get_direction', 'find_node_index', 'inv_target', 'is_similarity', 'subset_mps_by_node_count']
 
 
 def dataframes_to_metagraph(nodes, edges):
@@ -207,6 +207,22 @@ def find_directed_inversion(mp, directed_map):
     return [d and i for d, i in zip(directed, inverted)]
 
 
+def get_direction(mp, dir_map, direction_map, strict=False):
+    """
+    Gets the direction of influence for a metapath.  If Positive, then results
+    in an increase in the final node on the path. If negative, a decrease, and
+    if 0, then no change can be determined.
+    """
+
+    dir_edges = sum(gt.is_directed(mp, dir_map))
+    if ((strict and dir_edges == len(mp)) or (not strict and dir_edges > 0)) and \
+       (sum(gt.find_directed_inversion(mp, dir_map)) == 0):
+        directions = np.array(gt.is_directed(mp, direction_map))
+        return np.product(directions[np.where(directions != 0)])
+    else:
+        return 0
+
+
 def find_node_index(mp, node_names):
     """Retruns the indicies of the nodes in a metapath of a given metanode(s)."""
     if type(node_names) == str:
@@ -279,7 +295,7 @@ def is_similarity(mp, node_names, directed_map, max_repeats=2, check_dir='fwd', 
     test_idx = find_node_index(mp, node_names)
 
     # Only one if the test metanode(s) so not similarity (of that metanode) by definition
-    if len(test_idx) == 1:
+    if len(test_idx) <= 1:
         return False
     # Too many repeats (may not be similairty, but doesn't pass our treshold)
     elif len(test_idx) > max_repeats:
