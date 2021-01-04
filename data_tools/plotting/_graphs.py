@@ -450,7 +450,8 @@ def build_explanitory_graph(list_of_paths, list_of_edges=None, path_weights=None
     return G
 
 
-def draw_explanitory_graph(G, node_id_to_name=None, proba=None, n_paths=None, xscale=10, max_line_len=15, title=True):
+def draw_explanitory_graph(G, node_id_to_name=None, proba=None, n_paths=None, xscale=10, max_line_len=15, title=True,
+                           node_size=6000):
     """
     Funciton to draw an explanatory graph. Ideally the graph should be genrated from the fucntion
     `build_explanitory_graph`.  All required values for plotting will be added by using that function.
@@ -467,6 +468,7 @@ def draw_explanitory_graph(G, node_id_to_name=None, proba=None, n_paths=None, xs
     :param xscale: int, The scaling facor for the x axis
     :param max_line_len: int, the Maximum length of the line for node text labels
     :param title: bool, if true, will pull out the first node in the paths as a title
+    :param node_size: int, allow for larger nodes to be drawn
     :return: matplotlib figure
     """
 
@@ -506,7 +508,7 @@ def draw_explanitory_graph(G, node_id_to_name=None, proba=None, n_paths=None, xs
     edge_width = [3*G.edges[e]['weight'] for e in G.edges]
     edge_color = [G.edges[e]['color'] for e in G.edges]
 
-    nx.draw(G, pos=node_pos_dict, node_color=node_colors, node_size=6000,
+    nx.draw(G, pos=node_pos_dict, node_color=node_colors, node_size=node_size,
             edge_color=edge_color, width=edge_width)
 
     if edge_label_dict is not None:
