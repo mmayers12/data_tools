@@ -128,7 +128,7 @@ def prep_node_labels(label, max_line_len, spl_chars=None):
     :return: str, the label with newline characteres added
     """
 
-    spl_chars = [' ', '-', ']', ')']
+    spl_chars = [' ', '-', ']', ')', '\n']
     out = ''
     start = 0
 
@@ -155,7 +155,7 @@ def prep_node_labels(label, max_line_len, spl_chars=None):
         # if multiple split characters found, split on the one that makes the current line longest.
         if len(spl_idxs) > 0:
             spl_idx = min(spl_idxs)
-            out += label[start: end-spl_idx].rstrip(' ') + '\n'
+            out += label[start: end-spl_idx].rstrip(' ').rstrip('\n') + '\n'
             start = end-spl_idx
             end = start + max_line_len
 
