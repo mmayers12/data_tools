@@ -10,7 +10,7 @@ install_requires = [
     'seaborn',
     'scikit-learn>=0.21.3',
     'scipy>=1.3.1',
-    'wikidataintegrator==0.8.0'
+    'wikidataintegrator==0.7.4'
 ]
 
 setup(
