@@ -10,7 +10,7 @@ install_requires = [
     'seaborn',
     'scikit-learn>=0.21.3',
     'scipy>=1.3.1',
-    'wikidataintegrator==0.8.3'
+    'wikidataintegrator>=0.8.3'
 ]
 
 setup(
@@ -24,5 +24,5 @@ setup(
     description='Tools for manipulating data, particularly with the end goal of forming hetnet',
     long_description=open('README.md').read(),
     install_requires=install_requires,
-    python_requires='>=3.6',
+    python_requires='>=3.7',
 )
