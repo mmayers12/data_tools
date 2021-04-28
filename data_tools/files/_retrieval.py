@@ -90,6 +90,9 @@ def download(url, out_name=None, redownload=False):
     else:
         #Grab the base filename
         file_name = _os.path.basename(out_name)
+        # use the url filname in case only a directory (ending in /) is passed
+        if file_name == '':
+            file_name = url.split('/')[-1]
         # Make sure the output directory exists
         out_dir = _os.path.dirname(out_name)
         if not _os.path.exists(out_dir):
